@@ -1,0 +1,44 @@
+/* ViewExpenses.css */
+
+.table-container {
+    overflow-x: auto;
+  }
+  
+  .expenses-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .expenses-table th,
+  .expenses-table td {
+    padding: 0.75rem 1rem;
+  }
+  
+  .expenses-table th {
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-align: left;
+    text-transform: uppercase;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  
+  .expenses-table td {
+    font-size: 0.875rem;
+    color: #4b5563;
+  }
+  
+  .expenses-table tbody tr:nth-child(even) {
+    background-color: #f3f4f6;
+  }
+  
+  .expenses-table tbody tr:hover {
+    background-color: #edf2f7;
+  }
+  
+  /* Media queries for responsiveness */
+  @media (max-width: 640px) {
+    .expenses-table {
+      font-size: 0.75rem;
+    }
+  }
+  
