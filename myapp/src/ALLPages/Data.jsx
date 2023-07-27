@@ -1,43 +1,125 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
 import DatePicker from 'react-datepicker';
+import Alert from '../Components/Alert';
 import 'react-datepicker/dist/react-datepicker.css';
 import './ViewExpenses.css';
-const ViewExpenses = () => {
-  // Dummy data for the table
-  const expenses = [
-    {
-      id: 1,
-      name: 'Expense 1',
-      remarks: 'Lorem ipsum dolor sit amet',
-      category: 'Food',
-      date: '2023-07-25',
-      amount: 20,
-      updatedAt: '2023-07-26 10:30 AM',
-      createdBy: 'me',
-      userEmail: '',
-    },
-    {
-      id: 2,
-      name: 'Expense 2',
-      remarks: 'Consectetur adipiscing elit',
-      category: 'Travel',
-      date: '2023-07-26',
-      amount: 50,
-      updatedAt: '2023-07-26 11:45 AM',
-      createdBy: 'someone_else',
-      userEmail: 'john.doe@example.com',
-    },
-    // Add more dummy data here if needed
+import { useraddtask, useraddtaskfailure, useraddtasksuccess } from '../Redux/UserAddtask/Action';
+import { useDispatch, useSelector } from 'react-redux';
+import { getusertask } from '../Redux/UserNotes/Action';
+import { useSearchParams,useLocation } from 'react-router-dom';
+import { deletetask, deletetaskfailure, deletetasksuccess } from '../Redux/Deltetask/Action';
+import { useredittask, useredittaskfailure, useredittasksuccess } from '../Redux/EditUsertask/Action';
+
+// converting into properdate
+function getMonthName(monthNumber) {
+  const monthNames = [
+    "January", "February", "March", "April", "May", "June", "July",
+    "August", "September", "October", "November", "December"
   ];
+  return monthNames[monthNumber - 1];
+}
+
+function formatDate(dateString) {
+  const date = new Date(dateString);
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  const monthName = getMonthName(month);
+
+  return `${day} ${monthName}, ${year}`;
+}
+const initialupdatedata={
+  
+name:"",
+description:"",
+
+category:"",
+
+amount:"",
+
+date:""
+
+}
+const ViewExpenses = ({showCreateModal,handlemodel}) => {
+  const [properdate,setProperdate]=useState("")
+  // Dummy data for the table
+ 
 const [value,setValue]=useState({
   "myvalue":""
 })
-  const [showCreateModal, setShowCreateModal] = useState(false);
+
+const [searchParams]=useSearchParams()
+
+
+
+  
+  const [allexpenses,setAllExpenses]=useState([])
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+
+
+// console.log(dateofexpense)
+
   const [selectedExpense, setSelectedExpense] = useState(null);
+  const [alertdata,setAlertdata]=useState("")
   const [updatemodel,setUpdatemodel]=useState(false)
+  const dispatch=useDispatch()
+  const data=useSelector((state)=>state.useraddtaskreducer)
+  const myallexpenses=useSelector((state)=>state.usernotesreducer)
+  const {isLoading,usernotes}=myallexpenses
+
+// getting data first fetching
+const [againfetch,setAgainfetch]=useState(false)
+const userdata=useSelector((state)=>state.usersigninreducer)
+
+const {useremail}=userdata
+// console.log("useremail",useremail)
+const location=useLocation()
+useEffect(()=>{
+const obj={
+  params:{
+    "name":searchParams.get("name"),
+    "date":searchParams.get("date")
+  }
+}
+dispatch(getusertask(obj))
+
+
+
+},[location.search,againfetch])
+
+
+
+  // creation part
+ 
+  const handlecreatesubmit=(e)=>{
+    e.preventDefault()
+    // console.log(formData)
+    const {amount}=formData
+    let newamount=+amount
+    setFormData((pre)=>({...pre,amount:+newamount}))
+    dispatch(useraddtask(formData)).then((res)=>{
+      dispatch(useraddtasksuccess())
+      // console.log(res)
+    
+      setAlertdata(res.data.msg)
+      closeModal()
+      setAgainfetch(!againfetch)
+      setTimeout(()=>{
+ setAlertdata("")
+      },3000)
+    }).catch((err)=>{
+      dispatch(useraddtaskfailure())
+     setAlertdata(err.response.data.msg)
+     closeModal()
+     setTimeout(()=>{
+setAlertdata("")
+     },3000)
+      
+    })
+  }
   const [formData, setFormData] = useState({
     name: '',
     date: null,
@@ -62,55 +144,92 @@ const [value,setValue]=useState({
   };
 
   const handleDelete = (expense) => {
-    setSelectedExpense(expense);
+    const {_id}=expense
+    setSelectedExpense(_id);
     setShowDeleteModal(true);
   };
 
   const confirmDelete = () => {
     // Here, you can perform the actual delete operation
     // For demonstration purposes, we'll just log a message.
-    console.log('Expense deleted:', selectedExpense);
+    // console.log(selectedExpense)
+  dispatch(deletetask(selectedExpense)).then((res)=>{
+    dispatch(deletetasksuccess())
+    setAlertdata(res.data.msg)
+    deleteModal()
+    setAgainfetch(!againfetch)
+    setTimeout(()=>{
+      setAlertdata("")
+    },3000)
+    // console.log(res)
+  }).catch((err)=>{
+    // console.log(err)
+    setAlertdata(err.response.data.msg)
+    deleteModal()
+    
+    setTimeout(()=>{
+      setAlertdata("")
+    },3000)
+    dispatch(deletetaskfailure())
+  })
 
     // Close the modal after the delete action is performed
-    setShowDeleteModal(false);
+ 
   };
 
-  const handleSubmit = () => {
-    // Perform form submission logic here
-    // ...
 
-    // Reset the form fields
-    setFormData({
-      name: '',
-      date: null,
-      category: '',
-      description: '',
-      amount: '',
-    });
-
-    // Close the modal after form submission
-    setShowCreateModal(false);
-  };
-
+const deleteModal=()=>{
+  setShowDeleteModal(false);
+}
   const closeModal = () => {
-    setShowCreateModal(false);
-    setShowDeleteModal(false);
+    handlemodel()
+   
   };
 
   // updatepart>>>>>>>>>>>>>>>>>>>>>>>
+  const [updateid,setUpdateId]=useState("")
+  const [updatevalue,setUpdatevalue]=useState(initialupdatedata)
   const handleupdateChange=(e)=>{
     const {name,value}=e.target
-setValue((pre)=>({...pre,[name]:value}))
+setUpdatevalue((pre)=>({...pre,[name]:value}))
+  }
+  const handleupdatesubmit=(e)=>{
+    e.preventDefault()
+    const {amount,category,name,description,date}=updatevalue
+    
+    let obj={
+amount:+amount,
+category,
+name,
+description,date
+    }
+    // console.log(updateid)
+
+  dispatch(useredittask(updateid,obj)).then((res)=>{
+    setAlertdata(res.data.msg)
+    dispatch(useredittasksuccess())
+    setAgainfetch(!againfetch)
+    setUpdatemodel(!updatemodel)
+    setTimeout(()=>{
+setAlertdata("")
+    },3000)
+  }).catch((err)=>{
+    dispatch(useredittaskfailure())
+    setAlertdata(err.response.data.msg)
+    setTimeout(()=>{
+      setAlertdata("")
+    },3000)
+  })
   }
   return (
+    <>
+    {alertdata&&<Alert message={alertdata}/>} 
+   
     <div className="p-8">
       {/* Create Expense CTA Button */}
-      <button
-        className="bg-blue-500 text-white px-4 py-2 rounded-lg mb-4"
-        onClick={() => setShowCreateModal(true)}
-      >
-        Create Expense
-      </button>
+   
+
+
 
       {/* Table for View Expenses */}
       <div  className="table-container">
@@ -120,9 +239,9 @@ setValue((pre)=>({...pre,[name]:value}))
             <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Name
             </th>
-            <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            {/* <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Remarks
-            </th>
+            </th> */}
             <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Category
             </th>
@@ -144,28 +263,28 @@ setValue((pre)=>({...pre,[name]:value}))
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
-          {expenses.map((expense) => (
+          {typeof usernotes&&usernotes.length>=1?usernotes.map((expense) => (
             <tr key={expense.id}>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                 {expense.name}
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              {/* <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                 {expense.remarks}
-              </td>
+              </td> */}
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                 {expense.category}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {expense.date}
-              </td>
+                {formatDate(expense.date)}
+                </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                ${expense.amount}
+                INR {expense.amount}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                 {expense.updatedAt}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {expense.createdBy === 'me' ? 'me' : expense.userEmail}
+                 { useremail&&expense.createdby === useremail ? "me" : expense.createdby}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                 {/* Action buttons with icons */}
@@ -176,15 +295,22 @@ setValue((pre)=>({...pre,[name]:value}))
                   <FontAwesomeIcon icon={faTrash} />
                 </button>
                 <button onClick={()=>{
-                  setValue((pre)=>({...pre,myvalue:expense.id}))
+                  setUpdateId(expense._id)
+                 setUpdatevalue((pre)=>({...pre,name:expense.name,category:expense.category,date:expense.date,description:expense.description,amount:expense.amount}))
                   setUpdatemodel(!updatemodel)}} className="text-blue-500 hover:text-blue-700">
                   <FontAwesomeIcon icon={faEdit} />
                 </button>
               </td>
             </tr>
-          ))}
+      )) :""}
         </tbody>
       </table>
+
+     {typeof usernotes&&usernotes.length==0&& <div className='flex justify-center items-center'><p className='font-bold '>No Expenses found</p></div>} 
+
+
+
+
       </div>
       {/* Delete confirmation modal */}
       {showDeleteModal && (
@@ -196,7 +322,7 @@ setValue((pre)=>({...pre,[name]:value}))
             <div className="flex justify-end">
               <button
                 className="text-red-500 hover:text-red-700 mr-4"
-                onClick={closeModal}
+                onClick={deleteModal}
               >
                 No
               </button>
@@ -216,7 +342,7 @@ setValue((pre)=>({...pre,[name]:value}))
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-gray-800 bg-opacity-75">
           <div className="bg-white w-96 p-6 rounded-lg shadow-lg">
             <h2 className="text-xl font-semibold mb-4">Create Expense</h2>
-            <form>
+            <form onSubmit={handlecreatesubmit}>
               <div className="mb-4">
                 <label htmlFor="name" className="block font-medium">
                   Name
@@ -236,11 +362,12 @@ setValue((pre)=>({...pre,[name]:value}))
                 <label htmlFor="date" className="block font-medium">
                   Date of Expense
                 </label>
-                <DatePicker
+                <input
                   id="date"
+                  type="date"
                   name="date"
                   selected={formData.date}
-                  onChange={handleDateChange}
+                  onChange={handleInputChange}
                   className="w-full border-gray-300 rounded-md px-3 py-2"
                   dateFormat="yyyy-MM-dd"
                   required
@@ -305,9 +432,9 @@ setValue((pre)=>({...pre,[name]:value}))
                   Cancel
                 </button>
                 <button
-                  type="button"
+                  type="submit"
                   className="bg-green-500 text-white px-4 py-2 rounded-lg"
-                  onClick={handleSubmit}
+                  // onClick={handleSubmit}
                 >
                   Submit
                 </button>
@@ -322,7 +449,7 @@ setValue((pre)=>({...pre,[name]:value}))
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-gray-800 bg-opacity-75">
           <div className="bg-white w-96 p-6 rounded-lg shadow-lg">
             <h2 className="text-xl font-semibold mb-4">Edit Expense</h2>
-            <form>
+            <form onSubmit={handleupdatesubmit}> 
               <div className="mb-4">
                 <label htmlFor="name" className="block font-medium">
                   Name
@@ -330,8 +457,8 @@ setValue((pre)=>({...pre,[name]:value}))
                 <input
                   type="text"
                   id="name"
-                  name="myvalue"
-                  value={value.myvalue}
+                  name="name"
+                  value={updatevalue.name}
                   onChange={handleupdateChange}
                   className="w-full border-gray-300 rounded-md px-3 py-2"
                   maxLength="140"
@@ -342,11 +469,13 @@ setValue((pre)=>({...pre,[name]:value}))
                 <label htmlFor="date" className="block font-medium">
                   Date of Expense
                 </label>
-                <DatePicker
+                <input
+                type="date"
                   id="date"
                   name="date"
-                  selected={formData.date}
-                  onChange={handleDateChange}
+                  value={updatevalue.date}
+                  // selected={formData.date}
+                  onChange={handleupdateChange}
                   className="w-full border-gray-300 rounded-md px-3 py-2"
                   dateFormat="yyyy-MM-dd"
                   required
@@ -359,8 +488,8 @@ setValue((pre)=>({...pre,[name]:value}))
                 <select
                   id="category"
                   name="category"
-                  value={formData.category}
-                  onChange={handleInputChange}
+                  value={updatevalue.category}
+                  onChange={handleupdateChange}
                   className="w-full border-gray-300 rounded-md px-3 py-2"
                   required
                 >
@@ -380,8 +509,8 @@ setValue((pre)=>({...pre,[name]:value}))
                 <textarea
                   id="description"
                   name="description"
-                  value={formData.description}
-                  onChange={handleInputChange}
+                  value={updatevalue.description}
+                  onChange={handleupdateChange}
                   className="w-full border-gray-300 rounded-md px-3 py-2"
                   rows="3"
                   required
@@ -395,8 +524,8 @@ setValue((pre)=>({...pre,[name]:value}))
                   type="number"
                   id="amount"
                   name="amount"
-                  value={formData.amount}
-                  onChange={handleInputChange}
+                  value={updatevalue.amount}
+                  onChange={handleupdateChange}
                   className="w-full border-gray-300 rounded-md px-3 py-2"
                   min="0"
                   required
@@ -411,9 +540,9 @@ setValue((pre)=>({...pre,[name]:value}))
                   Cancel
                 </button>
                 <button
-                  type="button"
+                  type="submit"
                   className="bg-green-500 text-white px-4 py-2 rounded-lg"
-                  onClick={handleSubmit}
+                  // onClick={handleSubmit}
                 >
                   Submit
                 </button>
@@ -439,6 +568,7 @@ setValue((pre)=>({...pre,[name]:value}))
 
 
     </div>
+    </>
   );
 };
 

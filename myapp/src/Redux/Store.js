@@ -1,0 +1,19 @@
+
+
+import { legacy_createStore } from "redux";
+import { applyMiddleware } from "redux";
+import { combineReducers } from "redux";
+
+import thunk from "redux-thunk"
+
+import { reducer as usersignupreducer} from "./UserSide/Authentication/Reducer";
+import {reducer as usersigninreducer} from "./UserSide/Authentication/UserLogin/Reducer"
+
+import {reducer as useraddtaskreducer} from "./UserAddtask/Reducer"
+import {reducer as usernotesreducer} from "./UserNotes/Reducer"
+import {reducer as useredittaskreducer} from './EditUsertask/Reducer'
+import {reducer as usersingletaskreducer} from "./UserSingletask/Reducer"
+import {reducer as userdeletetaskreducer} from "./Deltetask/Reducer"
+const rootreducer=combineReducers({usersignupreducer,usersigninreducer,useraddtaskreducer,usernotesreducer,useredittaskreducer,usersingletaskreducer,userdeletetaskreducer})
+
+export const store=legacy_createStore(rootreducer,applyMiddleware(thunk))

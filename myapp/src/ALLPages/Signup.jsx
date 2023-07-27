@@ -1,7 +1,38 @@
 import React from 'react'
-
+import { Link, useNavigate } from 'react-router-dom'
+import { useState } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import { usersignup } from '../Redux/UserSide/Authentication/Action'
+import Alert from '../Components/Alert'
+const initialdata={
+  "email":"",
+  "password":""
+}
 export default function Signup() {
+  const [alertdata,setAlertdata]=useState("")
+ const [signindata,setSignindata]=useState(initialdata)
+const navigate=useNavigate()
+ const handlechange=(e)=>{
+  const {name,value}=e.target
+  setSignindata((pre)=>({...pre,[name]:value}))
+ }
+ const dispatch=useDispatch()
+ const data=useSelector((state)=>state.usersignupreducer)
+ const {isLoading}=data
+ const handlesubmit=(e)=>{
+  e.preventDefault()
+dispatch(usersignup(signindata)).then(async(res)=>{
  
+  setAlertdata(res.data.msg)
+ navigate("/login")
+  setTimeout(()=>{
+setAlertdata("")
+  },3000)
+}).catch((err)=>{
+  console.log(err)
+})
+ }
+
 return (
       <>
         {/*
@@ -12,6 +43,7 @@ return (
           <body class="h-full">
           ```
         */}
+        {alertdata&&<Alert message={alertdata}/>}
         <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">
           <div className="sm:mx-auto sm:w-full sm:max-w-sm">
             {/* <img
@@ -20,12 +52,12 @@ return (
               alt="Your Company"
             /> */}
             <h2 className="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
-              Sign in to your account
+              Sign Up to your account
             </h2>
           </div>
   
           <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-            <form className="space-y-6" action="#" method="POST">
+            <form className="space-y-6" onSubmit={handlesubmit}>
               <div>
                 <label htmlFor="email" className="block text-sm font-medium leading-6 text-gray-900">
                   Email address
@@ -34,6 +66,8 @@ return (
                   <input
                     id="email"
                     name="email"
+                    onChange={handlechange}
+                    value={signindata.email}
                     type="email"
                     autoComplete="email"
                     required
@@ -57,6 +91,8 @@ return (
                   <input
                     id="password"
                     name="password"
+                    onChange={handlechange}
+                    value={signindata.password}
                     type="password"
                     autoComplete="current-password"
                     required
@@ -70,11 +106,13 @@ return (
                   type="submit"
                   className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                 >
-                  Sign in
+                 sign up
                 </button>
               </div>
             </form>
-  
+<Link to="/login
+onChange={handlechange}
+value={signindata.email}"><p className='mt-2 text-center'>or signIN?</p></Link>
          
           </div>
         </div>
