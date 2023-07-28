@@ -15,6 +15,8 @@ export default function Filter() {
         let params={}
         name&&(params.name=name)
         dateofexpense&&(params.date=dateofexpense)
+        params.page=1
+        params.limit=5
         setSearchParams(params)
           
         },[name,dateofexpense])

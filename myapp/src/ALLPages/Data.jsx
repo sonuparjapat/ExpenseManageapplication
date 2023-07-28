@@ -11,6 +11,8 @@ import { getusertask } from '../Redux/UserNotes/Action';
 import { useSearchParams,useLocation } from 'react-router-dom';
 import { deletetask, deletetaskfailure, deletetasksuccess } from '../Redux/Deltetask/Action';
 import { useredittask, useredittaskfailure, useredittasksuccess } from '../Redux/EditUsertask/Action';
+import ErrorAlert from '../Components/ErrorAlert';
+import Pagination from './Pagination';
 
 // converting into properdate
 function getMonthName(monthNumber) {
@@ -42,7 +44,36 @@ amount:"",
 date:""
 
 }
+
+// time of updation
+
+const calculateTimeDifference = (timestamp1, timestamp2) => {
+  const currentTime = Date.now();
+  const time1 = parseInt(timestamp1, 10);
+  const time2 = parseInt(timestamp2, 10);
+
+  const timeDifference = Math.abs(time1 - time2);
+  const timeAgo = currentTime - time2;
+
+  const minute = 60 * 1000;
+  const hour = 60 * minute;
+
+  if (timeAgo < minute) {
+    return 'just now';
+  } else if (timeAgo < hour) {
+    const minutesAgo = Math.floor(timeAgo / minute);
+    return `${minutesAgo} minute${minutesAgo > 1 ? 's' : ''} ago`;
+  } else if (timeDifference < 24 * hour) {
+    const hoursAgo = Math.floor(timeAgo / hour);
+    return `${hoursAgo} hour${hoursAgo > 1 ? 's' : ''} ago`;
+  } else {
+    const daysAgo = Math.floor(timeAgo / (24 * hour));
+    return `${daysAgo} day${daysAgo > 1 ? 's' : ''} ago`;
+  }
+};
+
 const ViewExpenses = ({showCreateModal,handlemodel}) => {
+  const [erroralert,setErroralert]=useState("")
   const [properdate,setProperdate]=useState("")
   // Dummy data for the table
  
@@ -55,7 +86,7 @@ const [searchParams]=useSearchParams()
 
 
   
-  const [allexpenses,setAllExpenses]=useState([])
+
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
 
@@ -68,8 +99,8 @@ const [searchParams]=useSearchParams()
   const dispatch=useDispatch()
   const data=useSelector((state)=>state.useraddtaskreducer)
   const myallexpenses=useSelector((state)=>state.usernotesreducer)
-  const {isLoading,usernotes}=myallexpenses
-
+  const {isLoading,usernotes,totalpages,length}=myallexpenses
+// console.log(totalpages)
 // getting data first fetching
 const [againfetch,setAgainfetch]=useState(false)
 const userdata=useSelector((state)=>state.usersigninreducer)
@@ -81,7 +112,9 @@ useEffect(()=>{
 const obj={
   params:{
     "name":searchParams.get("name"),
-    "date":searchParams.get("date")
+    "date":searchParams.get("date"),
+    "limit":searchParams.get("page")&&5,
+    "page":searchParams.get("page")&&searchParams.get("page")
   }
 }
 dispatch(getusertask(obj))
@@ -112,10 +145,10 @@ dispatch(getusertask(obj))
       },3000)
     }).catch((err)=>{
       dispatch(useraddtaskfailure())
-     setAlertdata(err.response.data.msg)
+     setErroralert(err.response.data.msg)
      closeModal()
      setTimeout(()=>{
-setAlertdata("")
+setErroralert("")
      },3000)
       
     })
@@ -136,12 +169,7 @@ setAlertdata("")
     }));
   };
 
-  const handleDateChange = (date) => {
-    setFormData((prevFormData) => ({
-      ...prevFormData,
-      date,
-    }));
-  };
+
 
   const handleDelete = (expense) => {
     const {_id}=expense
@@ -150,9 +178,7 @@ setAlertdata("")
   };
 
   const confirmDelete = () => {
-    // Here, you can perform the actual delete operation
-    // For demonstration purposes, we'll just log a message.
-    // console.log(selectedExpense)
+    
   dispatch(deletetask(selectedExpense)).then((res)=>{
     dispatch(deletetasksuccess())
     setAlertdata(res.data.msg)
@@ -164,11 +190,11 @@ setAlertdata("")
     // console.log(res)
   }).catch((err)=>{
     // console.log(err)
-    setAlertdata(err.response.data.msg)
+   
     deleteModal()
-    
+    setErroralert(err.response.data.msg)
     setTimeout(()=>{
-      setAlertdata("")
+      setErroralert("")
     },3000)
     dispatch(deletetaskfailure())
   })
@@ -203,30 +229,37 @@ category,
 name,
 description,date
     }
-    // console.log(updateid)
+  // console.log(usernotes.length)
 
   dispatch(useredittask(updateid,obj)).then((res)=>{
+    setUpdatemodel(!updatemodel)
     setAlertdata(res.data.msg)
     dispatch(useredittasksuccess())
     setAgainfetch(!againfetch)
-    setUpdatemodel(!updatemodel)
+
     setTimeout(()=>{
 setAlertdata("")
     },3000)
   }).catch((err)=>{
     dispatch(useredittaskfailure())
-    setAlertdata(err.response.data.msg)
+    setUpdatemodel(!updatemodel)
+    setErroralert(err.response.data.msg)
+  
     setTimeout(()=>{
-      setAlertdata("")
+      setErroralert("")
     },3000)
   })
+  }
+
+  if(isLoading){
+    return <div className='flex justify-center items-center'><p className='font-bold'>Loading...</p></div>
   }
   return (
     <>
     {alertdata&&<Alert message={alertdata}/>} 
-   
+{erroralert&&<ErrorAlert message={erroralert}/>}
     <div className="p-8">
-      {/* Create Expense CTA Button */}
+      
    
 
 
@@ -262,15 +295,15 @@ setAlertdata("")
             </th>
           </tr>
         </thead>
+   
+      
         <tbody className="bg-white divide-y divide-gray-200">
           {typeof usernotes&&usernotes.length>=1?usernotes.map((expense) => (
             <tr key={expense.id}>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                 {expense.name}
               </td>
-              {/* <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {expense.remarks}
-              </td> */}
+          
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                 {expense.category}
               </td>
@@ -281,7 +314,7 @@ setAlertdata("")
                 INR {expense.amount}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {expense.updatedAt}
+                {calculateTimeDifference(expense.time, expense.updatedtime)}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                  { useremail&&expense.createdby === useremail ? "me" : expense.createdby}
@@ -304,9 +337,14 @@ setAlertdata("")
             </tr>
       )) :""}
         </tbody>
+        {length>5&&<div className='flex justify-center items-center'>
+      <Pagination totalPages={totalpages} /></div>}
       </table>
 
-     {typeof usernotes&&usernotes.length==0&& <div className='flex justify-center items-center'><p className='font-bold '>No Expenses found</p></div>} 
+     {typeof usernotes!=="undefined"&&usernotes.length==0&&isLoading==false&& <div className='flex justify-center items-center'><p className='font-bold '>No Expenses found</p></div>
+     
+     
+     } 
 
 
 

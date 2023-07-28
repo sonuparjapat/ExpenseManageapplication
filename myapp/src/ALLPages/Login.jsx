@@ -1,21 +1,25 @@
 import React, { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { Link } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { usersignup } from '../Redux/UserSide/Authentication/Action'
 import { usersignin, usersigninfailure, usersignsuccess } from '../Redux/UserSide/Authentication/UserLogin/Action'
 import Alert from '../Components/Alert'
 import { usersingtaskfail } from '../Redux/UserSingletask/ActionTypes'
+import ErrorAlert from '../Components/ErrorAlert'
 const initialdata={
   "email":"",
   "password":""
 }
 export default function Login() {
   const [logindata,setLogindata]=useState(initialdata)
+  const [erroralert,setErrorAlert]=useState("")
   const [alertdata,setAlertdata]=useState("")
 const handlechange=(e)=>{
   const {name,value}=e.target
   setLogindata((pre)=>({...pre,[name]:value}))
 } 
+const navigate=useNavigate()
+const location=useLocation()
 const dispatch=useDispatch()
 const data=useSelector((state)=>state.usersigninreducer)
 const {isLoading}=data
@@ -26,16 +30,18 @@ dispatch(usersignin(logindata)).then((res)=>{
   dispatch(usersignsuccess(res.data))
   sessionStorage.setItem("token",res.data.token)
 setAlertdata(res.data.msg)
+console.log(location.state)
+navigate(location.state,{replace:true})
 setTimeout(()=>{
   setAlertdata("")
 },2000)
 }).catch((err)=>{
   dispatch(usersigninfailure())
-  console.log(err)
-  setAlertdata(err.response.data.msg)
+  // console.log(err)
+  setErrorAlert(err.response.data.msg)
 
   setTimeout(()=>{
-    setAlertdata("")
+    setErrorAlert("")
   },2000)
 })
  
@@ -43,6 +49,7 @@ setTimeout(()=>{
 return (
       <>
       {alertdata&&<Alert message={alertdata}/>}
+      {erroralert&&<ErrorAlert message={erroralert}/>}
         {/*
           This example requires updating your template:
   

@@ -7,7 +7,7 @@ const Navbar = () => {
       <div className="container mx-auto">
         <div className="flex justify-between items-center">
           {/* Site Logo */}
-          <a href="/" className="text-white text-xl font-bold hidden xs:block sm:block">PeerXp</a>
+          <Link to="/" className="text-white text-xl font-bold hidden xs:block sm:block">Expense Manager</Link>
 
           {/* Navbar Buttons */}
           <div className="flex justify-between items-center w-full md:w-2/5 lg:w-1/5 " >
